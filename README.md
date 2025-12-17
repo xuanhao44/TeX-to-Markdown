@@ -2,6 +2,10 @@
 
 ## Use Sample
 
+Generate md files and add, commit, push to your repo.
+
+Need give Workflow permissions - Read and write permissions.
+
 ```yaml
 jobs:
   tex_to_md:
