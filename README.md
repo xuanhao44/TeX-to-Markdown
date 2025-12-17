@@ -1,6 +1,6 @@
 # TeX-to-Markdown
 
-## 在“别的仓库”里怎么用（最小调用示例）
+## Use Sample
 
 ```yaml
 jobs:
@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: TeX -> MD pipeline
-        uses: xuanhao44/TeX-to-Markdown@v0.0.2
+        uses: xuanhao44/TeX-to-Markdown@v0.0.3
         env:
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         with:
@@ -24,7 +24,6 @@ jobs:
           markdownlint: "false"
           textlint: "false"
 
-      # commit/push 仍然放在调用方 workflow 里（因为每个仓库策略不同）
       - name: Mark repository as safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
@@ -36,12 +35,18 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # always only commit the generated main.md
           git add main.md
 
-          # only add the svg files corresponding to changed pdfs in this push to the staging area
           if [ "${{ github.event_name }}" = "push" ]; then
-            changed_pdfs=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- '*.pdf' || true)
+            BEFORE="${{ github.event.before }}"
+            SHA="${{ github.sha }}"
+
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              changed_pdfs=$(git diff-tree --no-commit-id --name-only -r "$SHA" -- '*.pdf' || true)
+            else
+              changed_pdfs=$(git diff --name-only "$BEFORE" "$SHA" -- '*.pdf' || true)
+            fi
+
             while IFS= read -r pdf; do
               [ -n "$pdf" ] || continue
               svg="${pdf%.pdf}.svg"
