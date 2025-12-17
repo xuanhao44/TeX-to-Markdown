@@ -37,7 +37,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        bash "${{ github.action_path }}/scripts/run.sh" \
+        bash "$GITHUB_ACTION_PATH/scripts/run.sh" \
           "${{ inputs.tex }}" \
           "${{ inputs.images_dir }}" \
           "${{ inputs.out }}" \
