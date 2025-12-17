@@ -38,7 +38,8 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Run pipeline
+    - id: run
+      name: Run pipeline
       shell: bash
       run: |
         set -euo pipefail
