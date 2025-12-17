@@ -30,6 +30,11 @@ inputs:
     required: false
     default: "false"
 
+outputs:
+  out_md:
+    description: "Generated Markdown path"
+    value: ${{ steps.run.outputs.out_md }}
+
 runs:
   using: composite
   steps:
