@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: TeX -> MD pipeline
-        uses: xuanhao44/tex-to-md-action@v1
+        uses: xuanhao44/TeX-to-Markdown@v0.0.1
         env:
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         with:

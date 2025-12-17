@@ -1,5 +1,10 @@
 name: TeX to Markdown (Pandoc pipeline)
 description: Convert TeX to GitHub-flavored Markdown and export changed PDF figures to SVG.
+
+branding:
+  icon: file-text
+  color: blue
+
 inputs:
   tex:
     description: "Path to the main .tex file (relative to repo root)"
@@ -32,7 +37,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        "${{ github.action_path }}/scripts/run.sh" \
+        bash "${{ github.action_path }}/scripts/run.sh" \
           "${{ inputs.tex }}" \
           "${{ inputs.images_dir }}" \
           "${{ inputs.out }}" \
