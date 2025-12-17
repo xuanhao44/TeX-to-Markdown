@@ -16,21 +16,47 @@ if [ -z "$OUT_MD" ]; then
   OUT_MD="${TEX%.tex}.md"
 fi
 
+# Always run from the repository root (important for container/composite action)
+if [ -n "${GITHUB_WORKSPACE:-}" ] && [ -d "$GITHUB_WORKSPACE" ]; then
+  cd "$GITHUB_WORKSPACE"
+fi
+
+is_git_repo() {
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
+# Normalize IMAGES_DIR (strip trailing slash)
+IMAGES_DIR="${IMAGES_DIR%/}"
+
 # 0) Export changed PDFs -> SVG (push only, and only inside IMAGES_DIR)
 if [ -n "$IMAGES_DIR" ] && [ "${GITHUB_EVENT_NAME:-}" = "push" ]; then
-  BEFORE="${GITHUB_EVENT_BEFORE:-}"
-  SHA="${GITHUB_SHA:-}"
-  if [ -n "$BEFORE" ] && [ -n "$SHA" ]; then
-    changed_pdfs="$(git diff --name-only "$BEFORE" "$SHA" -- '*.pdf' || true)"
-    while IFS= read -r pdf; do
-      [ -n "$pdf" ] || continue
-      case "$pdf" in
-        "$IMAGES_DIR"/*)
-          svg="${pdf%.pdf}.svg"
-          inkscape "$pdf" --export-type=svg --export-plain-svg --export-filename="$svg"
-          ;;
-      esac
-    done <<< "$changed_pdfs"
+  if ! is_git_repo; then
+    echo "warning: not in a git repository; skipping PDF->SVG export."
+  else
+    BEFORE="${GITHUB_EVENT_BEFORE:-}"
+    SHA="${GITHUB_SHA:-}"
+
+    if [ -n "$SHA" ]; then
+      if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+        # First push / unusual event: list files from the commit itself
+        changed_pdfs="$(git diff-tree --no-commit-id --name-only -r "$SHA" -- '*.pdf' || true)"
+      else
+        changed_pdfs="$(git diff --name-only "$BEFORE" "$SHA" -- '*.pdf' || true)"
+      fi
+
+      while IFS= read -r pdf; do
+        [ -n "$pdf" ] || continue
+        # Only export PDFs under IMAGES_DIR
+        case "$pdf" in
+          "$IMAGES_DIR"/*)
+            [ -f "$pdf" ] || continue
+            svg="${pdf%.pdf}.svg"
+            echo "Inkscape: $pdf -> $svg"
+            inkscape "$pdf" --export-type=svg --export-plain-svg --export-filename="$svg"
+            ;;
+        esac
+      done <<< "$changed_pdfs"
+    fi
   fi
 fi
 
