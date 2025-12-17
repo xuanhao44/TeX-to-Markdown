@@ -1,0 +1,41 @@
+name: TeX to Markdown (Pandoc pipeline)
+description: Convert TeX to GitHub-flavored Markdown and export changed PDF figures to SVG.
+inputs:
+  tex:
+    description: "Path to the main .tex file (relative to repo root)"
+    required: true
+  images_dir:
+    description: "Directory to search for figure PDFs (relative to repo root). Leave empty to skip."
+    required: false
+    default: ""
+  out:
+    description: "Output .md path. Default: same basename as tex"
+    required: false
+    default: ""
+  prettier:
+    description: "Run prettier on output md (requires prettier available in PATH)"
+    required: false
+    default: "false"
+  markdownlint:
+    description: "Run markdownlint --fix on output md (requires markdownlint available in PATH)"
+    required: false
+    default: "false"
+  textlint:
+    description: "Run textlint --fix on output md if .textlintrc exists (requires textlint available in PATH)"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Run pipeline
+      shell: bash
+      run: |
+        set -euo pipefail
+        "${{ github.action_path }}/scripts/run.sh" \
+          "${{ inputs.tex }}" \
+          "${{ inputs.images_dir }}" \
+          "${{ inputs.out }}" \
+          "${{ inputs.prettier }}" \
+          "${{ inputs.markdownlint }}" \
+          "${{ inputs.textlint }}"
