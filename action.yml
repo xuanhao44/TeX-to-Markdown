@@ -9,6 +9,10 @@ inputs:
   tex:
     description: "Path to the main .tex file (relative to repo root)"
     required: true
+  root_dir:
+    description: "Base directory for tex/images/out (relative to repo root). Default: repo root."
+    required: false
+    default: "."
   images_dir:
     description: "Directory to search for figure PDFs (relative to repo root). Leave empty to skip."
     required: false
@@ -49,4 +53,5 @@ runs:
           "${{ inputs.out }}" \
           "${{ inputs.prettier }}" \
           "${{ inputs.markdownlint }}" \
-          "${{ inputs.textlint }}"
+          "${{ inputs.textlint }}" \
+          "${{ inputs.root_dir }}"
