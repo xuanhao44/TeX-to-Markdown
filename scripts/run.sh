@@ -156,7 +156,6 @@ elif ! is_git_repo; then
 elif [ "$ROOT_REL" = "(outside-repo)" ]; then
   log "ERROR: ROOT_DIR must be inside the repository."
   exit 1
-fi
 else
   BEFORE="${GITHUB_EVENT_BEFORE:-}"
   SHA="${GITHUB_SHA:-}"
