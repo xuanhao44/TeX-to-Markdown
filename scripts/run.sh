@@ -11,7 +11,8 @@ ROOT_DIR="${7:-}"   # NEW: base root dir, relative to repo root by default
 
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FILTERS="$ACTION_DIR/filters"
-POST="$ACTION_DIR/scripts/postformat-md.pl"
+EXPAND_TEX="$ACTION_DIR/scripts/expand-tex-includes.pl"
+POSTFORMAT_MD="$ACTION_DIR/scripts/postformat-md.pl"
 
 # ---------- helpers ----------
 log()  {
@@ -218,7 +219,15 @@ pushd "$ROOT_ABS" >/dev/null
 
 log "Running pandoc on: $TEX"
 log "Filters: $FILTERS/title-and-levels.lua"
-pandoc "$TEX" \
+PANDOC_TEX_INPUT="$TEX"
+EXPANDED_TEX=""
+EXPANDED_TEX="$(mktemp "${TMPDIR:-/tmp}/tex-to-md-expanded-XXXXXX.tex")"
+log "Expanding TeX includes with built-in resolver: $TEX -> $EXPANDED_TEX"
+perl "$EXPAND_TEX" "$TEX" > "$EXPANDED_TEX"
+log "Expanded TeX: $EXPANDED_TEX (bytes=$(filesize_bytes "$EXPANDED_TEX"), lines=$(lines_count "$EXPANDED_TEX"))"
+PANDOC_TEX_INPUT="$EXPANDED_TEX"
+
+pandoc "$PANDOC_TEX_INPUT" \
   --from=latex+raw_tex \
   --to=gfm+tex_math_dollars+hard_line_breaks \
   --wrap=none \
@@ -226,6 +235,9 @@ pandoc "$TEX" \
   -o "${OUT_MD}.tmp"
 
 mv "${OUT_MD}.tmp" "$OUT_MD"
+if [ -n "$EXPANDED_TEX" ]; then
+  rm -f "$EXPANDED_TEX"
+fi
 log "Generated: $OUT_MD (bytes=$(filesize_bytes "$OUT_MD"), lines=$(lines_count "$OUT_MD"))"
 endgroup
 
@@ -252,7 +264,9 @@ endgroup
 
 group "Step 2b: Post-format (perl)"
 before_bytes="$(filesize_bytes "${OUT_MD}.tmp")"
-perl "$POST" "${OUT_MD}.tmp" > "$OUT_MD"
+POST_TMP="${OUT_MD}.post.tmp"
+perl "$POSTFORMAT_MD" "${OUT_MD}.tmp" > "$POST_TMP"
+mv "$POST_TMP" "$OUT_MD"
 after_bytes="$(filesize_bytes "$OUT_MD")"
 rm -f "${OUT_MD}.tmp"
 log "Postformat: ${before_bytes} bytes -> ${after_bytes} bytes"
